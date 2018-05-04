@@ -2,11 +2,16 @@
 *                   Simulation with reactive streams                     *
 \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+package scripts.transaction.function
+
+import tools.Plotting
+import utils.ScriptBase
+
 
 /* Transition function example
  * Created 18.12.2017 author CAB */
 
-object TransitionFunctionExample extends ScriptBase{
+object TransitionFunctionExample extends ScriptBase with Plotting{
   println("#### Transition function example ####")
   //Definitions
   case class S(t: D, g: D, x: D, y: D)
@@ -35,12 +40,6 @@ object TransitionFunctionExample extends ScriptBase{
     ss :+= S(nt, ng, nx, ny)} //Put net state into list
   //Plot x, y
   Plot2D(ss.map(s ⇒ (s.x, s.y)))
-
-
-
-
-
-
 }
 
 
