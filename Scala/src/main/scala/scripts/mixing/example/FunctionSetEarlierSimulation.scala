@@ -38,7 +38,7 @@ object FunctionSetEarlierSimulation  extends ScriptBase with Plotting { import m
   val valX_0 = valX(t = 0)
   val valY_0 = valY(ω_1 = 0, ω_2 = 20)
   //Model
-  def F(X: valX, G: valG)(dt: D, valX_0: valX, valY_0: valY): valY = {
+  def F(X: valX)(G: valG, dt: D, valX_0: valX, valY_0: valY): valY = {
     var t = valX_0.t
     var ω_1 = valY_0.ω_1
     var ω_2 = valY_0.ω_2
@@ -50,10 +50,10 @@ object FunctionSetEarlierSimulation  extends ScriptBase with Plotting { import m
       t += dt}
     valY(ω_1, ω_2)}
   //Simulations
-  def simulation(setX: Vector[valX], G: valG): Vector[valY] = setX.map(X ⇒ F(X, G)(dt, valX_0, valY_0))
+  def simulation(setX: Vector[valX])(G: valG): Vector[valY] = setX.map(X ⇒ F(X)(G, dt, valX_0, valY_0))
   //Run simulation
   val setX = (0 to 100).map(i ⇒ valX(t = i / 10.0)).toVector
-  val setY = simulation(setX, G)
+  val setY = simulation(setX)(G)
   //Plot
   val (ωs1, ωs2) = setY.map(Y ⇒ (Y.ω_1, Y.ω_2)).unzip
   MultiYPlot2D(setX.map(_.t), Seq((ωs1, Color.RED), (ωs2, Color.GREEN))).show()}

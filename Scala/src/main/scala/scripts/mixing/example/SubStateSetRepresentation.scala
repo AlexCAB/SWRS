@@ -47,7 +47,7 @@ object SubStateSetRepresentation extends ScriptBase with Plotting { import math.
   println(s"Generated sub-states (|S_X_G| = ${S_X_G.size}):")
   S_X_G.foreach(S_X_j ⇒ println("    " + S_X_j))
   //Simulations
-  def simulation(setX: Vector[valX]): Vector[valY] =setX.map{ valX ⇒
+  def simulation(setX: Vector[valX]): Vector[valY] = setX.map{ valX ⇒
     //Collect all ub-state with same key
     val setS_valX = S_X_G.filter(_.X == valX)
     assume(setS_valX.size == 2, "Should be 2 sub-states for each valX key")

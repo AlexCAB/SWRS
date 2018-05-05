@@ -35,7 +35,7 @@ object FunctionSetRepresentation extends ScriptBase with Plotting { import math.
     q_4 = 3,  // L/m
     ω_3 = 10) // g/l
   //Model
-  def F(X: valX, G: valG): valY = {
+  def F(X: valX)(G: valG): valY = {
     val q = sqrt(105.0)
     val em = ((q - 15.0) * X.t) / 16.0
     val ep = -(((q + 15.0) * X.t) / 16.0)
@@ -53,10 +53,10 @@ object FunctionSetRepresentation extends ScriptBase with Plotting { import math.
         (5.0 * exp(ep)) +
         10.0)}
   //Simulations
-  def simulation(setX: Vector[valX], G: valG): Vector[valY] = setX.map(X ⇒ F(X, G))
+  def simulation(setX: Vector[valX])(G: valG): Vector[valY] = setX.map(X ⇒ F(X)(G))
   //Run simulation
   val setX = (0 to 100).map(i ⇒ valX(t = i / 10.0)).toVector
-  val setY = simulation(setX, G)
+  val setY = simulation(setX)(G)
   //Plot
   val (ωs1, ωs2) = setY.map(Y ⇒ (Y.ω_1, Y.ω_2)).unzip
   MultiYPlot2D(setX.map(_.t), Seq((ωs1, Color.RED), (ωs2, Color.GREEN))).show()}
