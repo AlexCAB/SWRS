@@ -9,7 +9,7 @@ import tools.{Input, Plotting}
 import utils.ScriptBase
 
 
-/* Function representation of mixing problem
+/* Function representation of mixing problem and interactive simulation
  *   onenote:https://d.docs.live.net/8e55450f976ac566/Notes/AI/Статьи.one#SWRS%20v0.2.5%20Basic%20modeling&
  *   section-id={40964F6B-F1E6-40E5-93D6-D7D464B4D57F}&page-id={AFB5685E-E61D-4707-B829-BABB190BC41D}&
  *   object-id={8EF68737-7BF8-08E1-0BCA-7F9EFBD51B94}&3E
@@ -29,7 +29,7 @@ object FunctionSetInteractiveSimulation extends ScriptBase with Plotting with In
   case class valX(t: D)
   case class valY(ω_1: D, ω_2: D)
   case class valG(v_1: D, v_2: D, q_1: D, q_2: D, q_3: D, q_4: D, ω_3: D)
-  val G = valG(
+  val G_0 = valG(
     v_1 = 4,  // L
     v_2 = 8,  // L
     q_1 = 3,  // L/m
@@ -37,7 +37,7 @@ object FunctionSetInteractiveSimulation extends ScriptBase with Plotting with In
     q_3 = 5,  // L/m
     q_4 = 3,  // L/m
     ω_3 = 10) // g/l
-  val dt = .1
+  val dt = .1 // seconds
   val valX_0 = valX(t = 0)
   val valY_0 = valY(ω_1 = 0, ω_2 = 20)
   //Model
@@ -53,37 +53,49 @@ object FunctionSetInteractiveSimulation extends ScriptBase with Plotting with In
       t += dt}
     valY(ω_1, ω_2)}
   //Simulations
-  def simulation(setX: Vector[valX])(M_i: valX⇒valY): Vector[valY] = setX.map(X ⇒ M_i(X))
-  //Simulation loop
-  var quit = false
-  var currentG = G
-  var lastSetX = Vector[valX](valX_0)
-  var lastSetY = Vector[valY](valY_0)
-  chart.addPoints(valX_0.t, Seq(valY_0.ω_1, valY_0.ω_2, G.ω_3))
-  while (! quit){
-    //Pick next model
-    val M_i: valX⇒valY = F(G = currentG, dt, valX_0 = lastSetX.last, valY_0 = lastSetY.last)
-    //Run simulation for current iteration with current parameters
-    val setX = (0 to 5).map(i ⇒ valX(t = lastSetX.last.t + (i / 10.0))).toVector
-    val setY = simulation(setX)(M_i)
-    //Plot points
-    setX.zip(setY).foreach{ case (valX, valY) ⇒
-      chart.addPoints(valX.t, Seq(valY.ω_1, valY.ω_2, currentG.ω_3))}
-    //Store last X's and Y's
-    lastSetX = setX
-    lastSetY = setY
-    //Sleep for 0.1 second
-    Thread.sleep(200L)
-    //Check input for next iteration
-    swCheckAndReadChar() match{
-      case Some('u') ⇒
-        currentG = currentG.copy(ω_3 = currentG.ω_3 + 1)
-      case Some('d') ⇒
-        currentG = currentG.copy(ω_3 = currentG.ω_3 - 1)
-      case Some('q') ⇒
-        quit = true
-      case Some(c) ⇒ println("Wrong input: " + c.toInt)
-      case None ⇒}}
+  def simulation(barX_i: valX)(M_i: valX⇒valY): valY = M_i(barX_i)
+  //Helpers functions
+  object H{
+    //Variables
+    private var input: Option[Char] = None
+    private var currentParameters = G_0
+    private var timeCounter = .0
+    //Functions
+    def not_terminated(): Boolean = {
+      input = swCheckAndReadChar()
+      ! input.contains('q')}
+    def get_parameters(): valG  = {
+      if(input.contains('u')) {
+        currentParameters = currentParameters.copy(ω_3 = currentParameters.ω_3 + 1)
+        println("Up, new ω_3 = " + currentParameters.ω_3)}
+      if(input.contains('d')) {
+        currentParameters = currentParameters.copy(ω_3 = currentParameters.ω_3 - 1)
+        println("Down, new ω_3 = " + currentParameters.ω_3)}
+      input = None
+      currentParameters}
+    def get_next_real_time(): D = {
+      val currentTime = timeCounter
+      timeCounter += dt //Next time
+      Thread.sleep((dt * 1000).toLong)
+      currentTime}
+    def get_model(G: valG, barX: valX, hatY: valY): valX⇒valY =
+      F(G, dt, valX_0 = barX, valY_0 = hatY)
+    def show(barX: valX, hatY: valY): Unit =
+        chart.addPoints(barX.t, Seq(hatY.ω_1, hatY.ω_2, currentParameters.ω_3))}
+  //Interactive simulation (regard pseudo-code 4)
+  var G = H.get_parameters()
+  var barX = valX_0
+  var hatY = valY_0
+  var M = H.get_model(G, barX, hatY)
+  while (H.not_terminated()){
+    val t_real = H.get_next_real_time()
+    val G_new = H.get_parameters()
+    if (G_new != G){
+      M = H.get_model(G_new, barX, hatY)
+      G = G_new}
+    barX = valX(t_real)
+    hatY = simulation(barX)(M)
+    H.show(barX, hatY)}
   //Exit
   System.exit(0)}
 

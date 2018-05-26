@@ -20,6 +20,7 @@ import info.monitorenter.gui.chart.rangepolicies.RangePolicyMinimumViewport
 import info.monitorenter.gui.chart.traces.Trace2DLtd
 import info.monitorenter.util.Range
 import javax.swing.JFrame
+import javax.swing.WindowConstants
 
 
 /* Set of plotting tools
@@ -61,7 +62,7 @@ trait Plotting { _: ScriptBase ⇒
   case class ChartRecorder2D(lines: Seq[(String, Color)], minRange: D = 0, maxRange: D = 1) {  //lines: number and parameters of the lines (name, color)
     //Init
     private val frame = new JFrame("ChartRecorder2D")
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
     private val chart = new Chart2D
     chart.setPreferredSize(new Dimension(800, 400))
     chart.getAxisX.setAxisTitle(new AxisTitle("X"))
