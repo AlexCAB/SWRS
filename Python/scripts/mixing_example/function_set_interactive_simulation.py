@@ -64,28 +64,28 @@ class 𝔈_:
      ω_3 = 10) # g/l
 up_down_step = 1
 
-# Model
-def F(G, Δt, X_0, Y_0):
-    def eval(X):
-        t = X_0.t
-        ω_1 = Y_0.ω_1
-        ω_2 = Y_0.ω_2
+# Model (Earlier)
+def F(Δt, 𝔛_0, 𝔜_0):
+    def eval(X, 𝔈):
+        t = 𝔛_0.t
+        ω_1 = 𝔜_0.ω_1
+        ω_2 = 𝔜_0.ω_2
         while t <= X.t:
             ω_1_m1 = ω_1
             ω_2_m1 = ω_2
-            ω_1 = ω_1_m1 + Δt * (((G.q_1 * G.ω_3) + (G.q_2 * ω_2_m1) - (G.q_3 * ω_1_m1)) / G.v_1)
-            ω_2 = ω_2 + Δt * (((G.q_3 * ω_1_m1) - (G.q_2 * ω_2_m1) - (G.q_4 * ω_2_m1)) / G.v_2)
+            ω_1 = ω_1_m1 + Δt * (((𝔈.q_1 * 𝔈.ω_3) + (𝔈.q_2 * ω_2_m1) - (𝔈.q_3 * ω_1_m1)) / 𝔈.v_1)
+            ω_2 = ω_2 + Δt * (((𝔈.q_3 * ω_1_m1) - (𝔈.q_2 * ω_2_m1) - (𝔈.q_4 * ω_2_m1)) / 𝔈.v_2)
             t += Δt
         return 𝔜_(ω_1, ω_2)
     return eval
 
 # Simulations
-def simulation(M, setX):
-    setY = []
+def simulation(M, setX, 𝔈):
+    set𝔜 = []
     for 𝔛 in setX:
-        𝔜 = M(𝔛)
-        setY.append(𝔜)
-    return setY
+        𝔜 = M(𝔛, 𝔈)
+        set𝔜.append(𝔜)
+    return set𝔜
 
 # Chart
 chart = ChartRecorder2D(
@@ -126,8 +126,8 @@ class Helpers:
     def get_next_real_time(self):
         self.__X = 𝔛_(self.__X.t + self.__Δt)
         return self.__X
-    def get_model(self, G, X_0, Y_0):
-        M = F(G, self.__Δt, X_0, Y_0)
+    def get_model(self, X_0, Y_0):
+        M = F(self.__Δt, X_0, Y_0)
         return M
     def show(self, X, Y):
         print(f"X = {X}, Y = {Y}, G = {self.__G}")
@@ -138,15 +138,15 @@ H = Helpers(𝔈_0, 𝔛_0, Δt, chart)
 G = H.get_parameters()
 X = 𝔛_0
 Y = 𝔜_0
-M = H.get_model(G, X, Y)
+M = H.get_model(X, Y)
 while H.not_terminated():
     t_real = H.get_next_real_time().t
-    G_new = H.get_parameters()
-    if G_new != G:
-      M = H.get_model(G_new, X, Y)
-      G = G_new
+    𝔈 = H.get_parameters()
+    if 𝔈 != G:
+      M = H.get_model(X, Y)
+      G = 𝔈
     X = 𝔛_(t_real)
-    Y = simulation(M, [X])[0]
+    Y = simulation(M, [X], G)[0]
     H.show(X, Y)
 
 # Make chart stay shown

@@ -61,39 +61,41 @@ class 𝔈_:
 𝔛_0 = 𝔛_(t=.0)
 𝔜_0 = 𝔜_(ω_1=.0, ω_2=20.0)
 
-# Model
-def F(X, G, Δt, 𝔛_0, 𝔜_0):
-    t = 𝔛_0.t
-    ω_1 = 𝔜_0.ω_1
-    ω_2 = 𝔜_0.ω_2
-    while t <= X.t:
-        ω_1_m1 = ω_1
-        ω_2_m1 = ω_2
-        ω_1 = ω_1_m1 + Δt * (((G.q_1 * G.ω_3) + (G.q_2 * ω_2_m1) - (G.q_3 * ω_1_m1)) / G.v_1)
-        ω_2 = ω_2 + Δt * (((G.q_3 * ω_1_m1) - (G.q_2 * ω_2_m1) - (G.q_4 * ω_2_m1)) / G.v_2)
-        t += Δt
-    return 𝔜_(ω_1, ω_2)
+# Model (Earlier)
+def F(Δt, 𝔛_0, 𝔜_0):
+    def eval(X, 𝔈):
+        t = 𝔛_0.t
+        ω_1 = 𝔜_0.ω_1
+        ω_2 = 𝔜_0.ω_2
+        while t <= X.t:
+            ω_1_m1 = ω_1
+            ω_2_m1 = ω_2
+            ω_1 = ω_1_m1 + Δt * (((𝔈.q_1 * 𝔈.ω_3) + (𝔈.q_2 * ω_2_m1) - (𝔈.q_3 * ω_1_m1)) / 𝔈.v_1)
+            ω_2 = ω_2 + Δt * (((𝔈.q_3 * ω_1_m1) - (𝔈.q_2 * ω_2_m1) - (𝔈.q_4 * ω_2_m1)) / 𝔈.v_2)
+            t += Δt
+        return 𝔜_(ω_1, ω_2)
+    return eval
 
 # Simulations
-def simulation(setX, G):
-    setY = np.array([])
-    for X in setX:
-        Y = F(X, 𝔈, Δt, 𝔛_0, 𝔜_0)
-        setY = np.append(setY, [Y])
-    return setY
+def simulation(setX, 𝔈):
+    set𝔜 = np.array([])
+    for 𝔛 in setX:
+        𝔜 = F(Δt, 𝔛_0, 𝔜_0)(𝔛, 𝔈)
+        set𝔜 = np.append(set𝔜, [𝔜])
+    return set𝔜
 
 # Run simulation
-setX = np.vectorize(lambda t: 𝔛_(t))(np.arange(0.0, 10.1, 0.1))
-setY = simulation(setX, 𝔈)
+set𝔛 = np.vectorize(lambda t: 𝔛_(t))(np.arange(0.0, 10.1, 0.1))
+set𝔜 = simulation(set𝔛, 𝔈)
 
 # Print result
 print("Simulation result (𝔛 -> 𝔜): ")
-for [𝔛, 𝔜] in np.column_stack((setX, setY)):
+for [𝔛, 𝔜] in np.column_stack((set𝔛, set𝔜)):
     print(f"    {str(𝔛):30} --> {𝔜}")
 
 # Plot result
 plt.figure("Simulation of function set representation")
 plt.grid(color="gray")
-plt.plot([𝔛.t for 𝔛 in setX], [𝔜.ω_1 for 𝔜 in setY], "g", label="ω_1")
-plt.plot([𝔛.t for 𝔛 in setX], [𝔜.ω_2 for 𝔜 in setY], "r", label="ω_2")
+plt.plot([𝔛.t for 𝔛 in set𝔛], [𝔜.ω_1 for 𝔜 in set𝔜], "g", label="ω_1")
+plt.plot([𝔛.t for 𝔛 in set𝔛], [𝔜.ω_2 for 𝔜 in set𝔜], "r", label="ω_2")
 plt.show()

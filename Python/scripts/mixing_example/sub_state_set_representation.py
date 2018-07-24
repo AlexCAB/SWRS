@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                   Simulation with reactive streams                    #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-"""Function set representation of mixing problem
+"""Sub-state set representation of mixing problem with building by function set model
 onenote:https://d.docs.live.net/8e55450f976ac566/Notes/AI/Статьи.one#SWRS%20v0.2.5%20Basic%20modeling&
     section-id={40964F6B-F1E6-40E5-93D6-D7D464B4D57F}&page-id={AFB5685E-E61D-4707-B829-BABB190BC41D}&
     object-id={489EDFFB-40E0-073C-3F49-7F005EDECE76}&64
@@ -18,7 +14,7 @@ import matplotlib.pyplot as plt
 
 # Script init
 print(""" 
-#### Function set representation ####
+#### Sub-state set representation ####
 X = [t]
 Y = [ω_1, ω_2̂]
 G = [v_1, v_2, q_1, q_2, q_3, q_4, ω_3]
@@ -36,31 +32,24 @@ class 𝔜_:
         self.ω_2 = ω_2
     def __repr__(self):
         return f"𝔜 = [ω_1 = {self.ω_1}, ω_2 = {self.ω_2}]"
-class 𝔈_:
-    def __init__(self, v_1, v_2, q_1, q_2, q_3, q_4, ω_3):
-        self.v_1 = v_1
-        self.v_2 = v_2
-        self.q_1 = q_1
-        self.q_2 = q_2
-        self.q_3 = q_3
-        self.q_4 = q_4
-        self.ω_3 = ω_3
+class 𝔖𝔛_q_:  # Sub-state, 𝔖 ⊆ 𝔜 is sub-stat value, 𝔛 ∈ 𝕏 is key values set, q ∈ ℕ is sub-sate index
+    def __init__(self, 𝔛, 𝔜, q):
+        self.t = 𝔛.t
+        if q == 1:
+            self.ω_1 = 𝔜.ω_1
+        elif q == 2:
+            self.ω_2 = 𝔜.ω_2
+        else:
+            assert False, "index j can be only  1 or 2"
+        self.q = q
     def __repr__(self):
-        return f"𝔈 = [v_1 = {self.v_1}, v_2 = {self.v_2}, q_1 = {self.q_1}, q_2 = {self.q_2}, " \
-             + f"q_3 = {self.q_3}, q_4 = {self.q_4}, ω_3 = {self.ω_3}]"
+        if self.q == 1:
+            return f"𝔖^𝔛_q = 𝔖=[ω_1={self.ω_1}]^𝔛=[t={self.t}]_q=1"
+        else:
+            return f"𝔖^𝔛_q = 𝔖=[ω_2={self.ω_2}]^𝔛=[t={self.t}]_q=2"
 
-# Parameters
-𝔈 = 𝔈_(
-     v_1 = 4,  # L
-     v_2 = 8,  # L
-     q_1 = 3,  # L/m
-     q_2 = 2,  # L/m
-     q_3 = 5,  # L/m
-     q_4 = 3,  # L/m
-     ω_3 = 10) # g/l
-
-# Model
-def F(X, 𝔈):
+# Function set model
+def F(X):
     q = m.sqrt(105.0)
     em = m.exp(((q - 15.0) * X.t) / 16.0)
     ep = m.exp(-(((q + 15.0) * X.t) / 16.0))
@@ -68,17 +57,31 @@ def F(X, 𝔈):
         ω_1 = ((13.0 * em * q) / 21.0) - ((13.0 * ep * q) / 21.0) - (5.0 * em) - (5.0 * ep) + 10.0,
         ω_2 = -((5.0 * em * q) / 21.0) + ((5.0 * ep * q) / 21.0) + (5.0 * em) + (5.0 * ep) + 10.0)
 
-# Simulations
-def simulation(setX, 𝔈):
-    set𝔜 = np.array([])
-    for 𝔛 in setX:
-        𝔜 = F(𝔛, 𝔈)
-        set𝔜 = np.append(set𝔜, [𝔜])
+# Generating of set of sub-states
+set𝔖X𝔈 = []
+for 𝔛 in [𝔛_(t) for t in np.round(np.arange(-15.0, 15.0, 0.1), 4)]:
+    𝔜 = F(𝔛)
+    set𝔖X𝔈.append(𝔖𝔛_q_(𝔛, 𝔜, q=1))
+    set𝔖X𝔈.append(𝔖𝔛_q_(𝔛, 𝔜, q=2))
+print("Generated set 𝔖^X|𝔈:")
+for 𝔖𝔛_q in set𝔖X𝔈: print("    "+ str(𝔖𝔛_q))
+
+
+# Simulation function
+def simulation(set𝔛):
+    set𝔜 = []
+    for 𝔛 in set𝔛:
+        𝔖𝔛_1 = None
+        𝔖𝔛_2 = None
+        for 𝔖𝔛_q in set𝔖X𝔈:
+            if 𝔖𝔛_q.t == 𝔛.t and 𝔖𝔛_q.q == 1: 𝔖𝔛_1 = 𝔖𝔛_q
+            if 𝔖𝔛_q.t == 𝔛.t and 𝔖𝔛_q.q == 2: 𝔖𝔛_2 = 𝔖𝔛_q
+        set𝔜.append(𝔜_(𝔖𝔛_1.ω_1, 𝔖𝔛_2.ω_2))
     return set𝔜
 
 # Run simulation
-set𝔛 = np.vectorize(lambda t: 𝔛_(t))(np.arange(0.0, 10.1, 0.1))
-set𝔜 = simulation(set𝔛, 𝔈)
+set𝔛 = np.vectorize(lambda t: 𝔛_(t))(np.round(np.arange(0.0, 10.1, 0.1), 4))
+set𝔜 = simulation(set𝔛)
 
 # Print result
 print("Simulation result (𝔛 -> 𝔜): ")
