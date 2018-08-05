@@ -90,7 +90,7 @@ class GraphVisualisation:
         colors = ""
         for node in nodes:
             label, pos, color, eds = node.graph_repr()
-            assert len(color) == 1, "color string should have exactly 1 char length"
+            assert len(color) == 1, f"color string should have exactly 1 char length, got{color} len({len(color)})"
             labels[node] = label
             positions[node] = pos
             colors += color

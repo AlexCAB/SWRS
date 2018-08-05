@@ -86,105 +86,104 @@ class 𝔖𝔛_q_: # Sub-state, 𝔖 ⊆ 𝔜 is sub-stat value, 𝔛 ∈ 𝕏 i
         else:
             return f"𝔖^𝔛_q = 𝔖=[ω_2={self.ω_2}]^𝔛=[t={self.t}]_q=2"
 
-# Node definitions
-class S_node(NodeLike): # Holds sub-state 𝔖𝔛q, d, w is index of S_node in the Γ graph
-    def __init__(self, d, w):
+# S node definitions
+class S_(NodeLike): # Represent S (variable) node that holds sub-state 𝔖𝔛q, d, w is index of S_node in the Γ graph
+    def __init__(self, Θ𝔓, d, w):
+        self.Θ𝔓 = Θ𝔓
         self.d = d
         self.w = w
-        self.__S = None
+        self.S = None
+        if Θ𝔓 is not None:
+            Θ𝔓.set_S(self)
     def is_defined(self):
-        return self.__S is not None
+        return self.S is not None
     def assign(self, 𝔖𝔛q):
         assert 𝔖𝔛q is not None
         assert 𝔖𝔛q.q == self.w
-        self.__S = 𝔖𝔛q
+        self.S = 𝔖𝔛q
     def get(self):
-        return self.__S
+        return self.S
     def graph_repr(self):
         label = f"S_{self.d},{self.w}"
         pos = (self.d, self.w)
         color = "k" if self.is_defined() else "m"
-        return label, pos, color, []
+        edges = [] if self.Θ𝔓 is None else self.Θ𝔓.graph_repr_edges()
+        return label, pos, color, edges
     def __repr__(self):
-        if self.__S is None:
+        if self.S is None:
             return f"S_d,w = (∅)_d={self.d},w={self.w}"
         else:
-            return f"S_d,w = ({self.__S})_d={self.d},w={self.w}"
-class Θ𝔓_node(NodeLike): # A transaction function
-    def __init__(self, S_1, S_2, 𝔓_h, gS, d, w, f_t, f_ω):
-        assert S_1.d == (d - 1)
-        assert S_2.d == (d - 1)
-        assert gS.d == d
+            return f"S_d,w = ({self.S})_d={self.d},w={self.w}"
+class Θ𝔓_: # Represent set of S node income edges (transaction function)
+    def __init__(self, S_1, S_2, 𝔓_h, f_t, f_ω):
         assert S_1.w == 1
         assert S_2.w == 2
-        assert gS.w == w
-        assert 𝔓_h.h == w
-        self.d = d
-        self.w = w
-        self.__S_1 = S_1
-        self.__S_2 = S_2
-        self.__𝔓_h  = 𝔓_h
-        self.__gS = gS
-        self.__f_t = f_t
-        self.__f_ω = f_ω
+        self.S_1 = S_1
+        self.S_2 = S_2
+        self.𝔓_h  = 𝔓_h
+        self.f_t = f_t
+        self.f_ω = f_ω
+        self.gS = None
+    def set_S(self, gS):
+        assert self.S_1.d == (gS.d - 1)
+        assert self.S_2.d == (gS.d - 1)
+        assert gS.d == gS.d
+        assert gS.w == gS.w
+        assert self.𝔓_h.h == gS.w
+        self.gS = gS
     def eval(self):
-        if self.__S_1.is_defined() and self.__S_2.is_defined() and not self.__gS.is_defined():
-            assert self.__S_1.get().t == self.__S_2.get().t
-            t = self.__f_t(self.__S_1.get().t)
-            ω = self.__f_ω(self.__S_1.get().ω_1, self.__S_2.get().ω_2, self.__S_1.get().t, t, self.__𝔓_h)
-            self.__gS.assign(𝔖𝔛_q_(t, ω, q=self.w))
+        assert self.gS is not None
+        if self.S_1.is_defined() and self.S_2.is_defined() and not self.gS.is_defined():
+            assert self.S_1.get().t == self.S_2.get().t
+            t = self.f_t(self.S_1.get().t)
+            ω = self.f_ω(self.S_1.get().ω_1, self.S_2.get().ω_2, self.S_1.get().t, t, self.𝔓_h)
+            self.gS.assign(𝔖𝔛_q_(t, ω, q=self.gS.w))
             return True
         else:
             return False
-    def graph_repr(self):
-        label = f"Θ_{self.d},{self.w}"
-        pos = (self.d - .3, self.w + (.2 if self.w == 1 else -.2))
-        color = "g"
-        edges = [(self.__S_1, self), (self.__S_2, self), (self, self.__gS)]
-        return label, pos, color, edges
+    def graph_repr_edges(self):
+        return [(self.S_1, self.gS), (self.S_2, self.gS)]
     def __repr__(self):
-        return f"{self.__S_1}, {self.__S_2} --> Θ^|𝔓_d={self.d},w={self.w} --> {self.__gS}"
+        return f"{self.S_1}, {self.S_2} -- Θ^|𝔓 --> {self.gS}"
 
 # Graph definitions
 class Γ𝔈_graph(GraphLike):
-    def __init__(self, setS, setΘ_𝔓, set𝔓):
+    def __init__(self, setS, setΘ_𝔓):
         for S in setS:
             assert not S.is_defined()
-        self.__setS = setS
-        self.__setΘ_𝔓 = setΘ_𝔓
-        self.__set𝔓 = set𝔓
+        self.setS = setS
+        self.setΘ_𝔓 = setΘ_𝔓
     def γ(self, p𝔖):
         for (d, w), 𝔖𝔛_q in p𝔖.items():
-            for S in self.__setS:
+            for S in self.setS:
                 if S.d == d and S.w == w:
                     S.assign(𝔖𝔛_q)
-        while False in [S.is_defined() for S in self.__setS]:
-            for Θ_𝔓 in self.__setΘ_𝔓:
+        while False in [S.is_defined() for S in self.setS]:
+            for Θ_𝔓 in self.setΘ_𝔓:
                 if Θ_𝔓.eval():
                     self.redraw()
-        return γ𝔈_graph(self.__setS, self.__setΘ_𝔓, self.__set𝔓)
+        return γ𝔈_graph(self.setS, self.setΘ_𝔓)
     def graph_repr(self):
-        return self.__setS + self.__setΘ_𝔓
+        return self.setS
     def __repr__(self):
         rs = "Γ^|𝔈: \n"
-        for Θ_𝔓 in self.__setΘ_𝔓:
+        for Θ_𝔓 in self.setΘ_𝔓:
             rs = rs + f"    {str(Θ_𝔓)}\n"
         return rs
 class γ𝔈_graph:
-    def __init__(self, setS, setΘ_𝔓, set𝔓):
+    def __init__(self, setS, setΘ_𝔓):
         for S in setS:
             assert S.is_defined()
-        self.__setS = setS
-        self.__setΘ_𝔓 = setΘ_𝔓
-        self.__set𝔓 = set𝔓
+        self.setS = setS
+        self.setΘ_𝔓 = setΘ_𝔓
     def 𝔖(self):
         set𝔖X𝔈 = []
-        for S in self.__setS:
+        for S in self.setS:
             set𝔖X𝔈.append(S.get())
         return set𝔖X𝔈
     def __repr__(self):
         rs = "γ^|𝔈: \n"
-        for Θ_𝔓 in self.__setΘ_𝔓:
+        for Θ_𝔓 in self.setΘ_𝔓:
             rs = rs + f"    {str(Θ_𝔓)}\n"
         return rs
 
@@ -194,21 +193,21 @@ def build_Γ𝔈(n, Δt, 𝔈, X_transition, S_transition):
     _𝔓_2 = 𝔓_h_(𝔈, h=2)
     f_t = X_transition(Δt)
     f_ω_1, f_ω_2 = S_transition()
-    S_1 = S_node(d=0, w=1)
-    S_2 = S_node(d=0, w=2)
+    S_1 = S_(Θ𝔓=None, d=0, w=1)
+    S_2 = S_(Θ𝔓=None, d=0, w=2)
     setS = [S_1, S_2]
     setΘ_𝔓 = []
     for i in range(1, n + 1):
-        gS_1 = S_node(d=i, w=1)
-        gS_2 = S_node(d=i, w=2)
-        Θ_𝔓_1 = Θ𝔓_node(S_1, S_2, _𝔓_1, gS_1, d=i, w=1, f_t=f_t, f_ω=f_ω_1)
-        Θ_𝔓_2 = Θ𝔓_node(S_1, S_2, _𝔓_2, gS_2, d=i, w=2, f_t=f_t, f_ω=f_ω_2)
+        Θ_𝔓_1 = Θ𝔓_(S_1, S_2, _𝔓_1, f_t=f_t, f_ω=f_ω_1)
+        Θ_𝔓_2 = Θ𝔓_(S_1, S_2, _𝔓_2, f_t=f_t, f_ω=f_ω_2)
+        gS_1 = S_(Θ_𝔓_1, d=i, w=1)
+        gS_2 = S_(Θ_𝔓_2, d=i, w=2)
         setS.extend([gS_1, gS_2])
         setΘ_𝔓.extend([Θ_𝔓_1, Θ_𝔓_2])
         S_1 = gS_1
         S_2 = gS_2
     set𝔓 = [_𝔓_1, _𝔓_2]
-    return Γ𝔈_graph(setS, setΘ_𝔓, set𝔓)
+    return Γ𝔈_graph(setS, setΘ_𝔓)
 
 # Parameters
 𝔈 = 𝔈_(
@@ -244,7 +243,6 @@ def S_functional_transition():
     return f_ω_1, f_ω_2
 def S_earlier_transition():
     def f_ω_1(ω_1, ω_2, t, t_next, 𝔓_1):
-        print(t_next)
         return ω_1 + (t_next - t) * (((𝔓_1.q_1 * 𝔓_1.ω_3) + (𝔓_1.q_2 * ω_2) - (𝔓_1.q_3 * ω_1)) / 𝔓_1.v_1)
     def f_ω_2(ω_1, ω_2, t, t_next, 𝔓_2):
         return ω_2 + (t_next - t) * (((𝔓_2.q_3 * ω_1) - (𝔓_2.q_2 * ω_2) - (𝔓_2.q_4 * ω_2)) / 𝔓_2.v_2)
