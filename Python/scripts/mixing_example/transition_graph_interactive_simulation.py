@@ -69,12 +69,14 @@ class 𝔓_h_:
 
 class 𝔖𝔛_q_: # Sub-state, 𝔖 ⊆ 𝔜 is sub-stat value, 𝔛 ∈ 𝕏 is key values set, q ∈ ℕ is sub-sate index
     def __init__(self, t, ω, q):
-        self.t = t
         if q == 1:
+            self.t = t
             self.ω_1 = ω
         elif q == 2:
+            self.t = t
             self.ω_2 = ω
         elif q == 3:
+            self.t_real = t
             self.ω_3 = ω
         else:
             assert False, "index q can be only 1 or 2 or 3"
@@ -85,7 +87,7 @@ class 𝔖𝔛_q_: # Sub-state, 𝔖 ⊆ 𝔜 is sub-stat value, 𝔛 ∈ 𝕏 i
         elif self.q == 2:
             return f"𝔖^𝔛_q = 𝔖=[ω_2={self.ω_2}]^𝔛=[t={self.t}]_q=2"
         else:
-            return f"𝔖^𝔛_q = 𝔖=[ω_3={self.ω_3}]^𝔛=[t={self.t}]_q=3"
+            return f"𝔖^𝔛_q = 𝔖=[ω_3={self.ω_3}]^𝔛=[t_real={self.t_real}]_q=3"
 
 # S node definitions
 class S_(NodeLike): # Represent S (variable) node that holds sub-state 𝔖𝔛q, d, w is index of S_node in the Γ graph
@@ -146,9 +148,9 @@ class Θ𝔓_: # A transaction function
             ω_2 = self.S_2.get().ω_2
             ω_3 = self.S_3.get().ω_3
             t_prev = self.S_1.get().t
-            t_next = self.S_3.get().t
-            ω = self.f_ω(ω_1, ω_2, ω_3, t_prev, t_next, self.𝔓_h)
-            𝔖𝔛_q = 𝔖𝔛_q_(t_next, ω, q=self.gS.w)
+            t_real = self.S_3.get().t_real
+            ω = self.f_ω(ω_1, ω_2, ω_3, t_prev, t_real, self.𝔓_h)
+            𝔖𝔛_q = 𝔖𝔛_q_(t_real, ω, q=self.gS.w)
             self.gS.assign(𝔖𝔛_q)
             return 𝔖𝔛_q
     def graph_repr_edges(self):
@@ -188,7 +190,7 @@ class Γ𝔈_graph(GraphLike):
         return rs
 
 # Γ^|𝔈 builder
-def build_Γ𝔈(n, 𝔈, S_transition):
+def build_interactive_Γ𝔈(n, 𝔈, S_transition):
     _𝔓_1 = 𝔓_h_(𝔈, h=1)
     _𝔓_2 = 𝔓_h_(𝔈, h=2)
     f_ω_1, f_ω_2 = S_transition()
@@ -208,7 +210,6 @@ def build_Γ𝔈(n, 𝔈, S_transition):
         setS_3.append(S_3)
         S_1 = gS_1
         S_2 = gS_2
-    set𝔓 = [_𝔓_1, _𝔓_2]
     return Γ𝔈_graph(setS, setΘ_𝔓), setS_3
 
 # Parameters
@@ -236,7 +237,7 @@ def S_transition():
     return f_ω_1, f_ω_2
 
 # Build Γ^|𝔈
-Γ𝔈, setS_3 = build_Γ𝔈(n, 𝔈, S_transition)
+Γ𝔈, setS_3 = build_interactive_Γ𝔈(n, 𝔈, S_transition)
 print(Γ𝔈)
 graph_viz = GraphVisualisation("Γ_graph", Γ𝔈, pause=.05)
 
@@ -249,9 +250,10 @@ chart = ChartRecorder2D(
     pause=.05)
 
 # Helpers functions
-class Helpers:
-    def __init__(self, init_ω_3, up_down_step, chart):
+class Interaction:
+    def __init__(self, Δt, init_ω_3, up_down_step, chart):
         self.input = ""
+        self.Δt = Δt
         self.ω_3 = init_ω_3
         self.up_down_step = up_down_step
         self.chart = chart
@@ -259,36 +261,30 @@ class Helpers:
             print(f"Pressed key = {key}")
             self.input = key
         chart.on_kay_press(on_key)
-    def not_terminated(self):
-        if self.input == "e":
-            self.input = ""
-            print("Program ended!")
-            return False
-        else:
-            return True
-    def get_ω_3(self):
+    def next_𝔖𝔛_3(self, i):
+        t = i * self.Δt
         if self.input == "up":
             self.ω_3 += self.up_down_step
             self.input = ""
         if self.input == "down":
             self.ω_3 -= self.up_down_step
             self.input = ""
-        return self.ω_3
+        return 𝔖𝔛_q_(t, self.ω_3, q=3)
     def show(self, X, Y):
         print(f"X = {X}, Y = {Y}")
         self.chart.append(x = X.t, ys = [Y.ω_1, Y.ω_2, Y.ω_3])
-H = Helpers(init_ω_3, up_down_step, chart)
+I = Interaction(Δt, init_ω_3, up_down_step, chart)
 
 # Interactive simulation
 Γ𝔈.init(p𝔖)
 i = 0
-while H.not_terminated() and i < n:
+while i < n:
     S_3 = setS_3[i]
     assert S_3.d == i
     assert S_3.w == 3
-    t = i * Δt
-    ω_3 = H.get_ω_3()
-    S_3.assign(𝔖𝔛_q_(t, ω_3, q=3))
+    assert not S_3.is_defined()
+    𝔖𝔛_3 = I.next_𝔖𝔛_3(i)
+    S_3.assign(𝔖𝔛_3)
     graph_viz.update()
     set𝔖𝔛_q = Γ𝔈.eval()
     assert len(set𝔖𝔛_q) == 2, f"Not all 𝔖𝔛_q evaluated, set𝔖𝔛_q = {set𝔖𝔛_q}"
@@ -299,9 +295,9 @@ while H.not_terminated() and i < n:
             𝔖𝔛_1 = 𝔖𝔛_q
         if 𝔖𝔛_q.q == 2:
             𝔖𝔛_2 = 𝔖𝔛_q
-    X = b𝔛_(t)
-    Y = h𝔜_(𝔖𝔛_1.ω_1, 𝔖𝔛_2.ω_2, ω_3)
-    H.show(X, Y)
+    X = b𝔛_(𝔖𝔛_3.t_real)
+    Y = h𝔜_(𝔖𝔛_1.ω_1, 𝔖𝔛_2.ω_2, 𝔖𝔛_3.ω_3)
+    I.show(X, Y)
     i += 1
 
 #Show plots
