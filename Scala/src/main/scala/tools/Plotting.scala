@@ -27,7 +27,7 @@ import javax.swing.WindowConstants
  * Created 27.04.2018 author CAB */
 
 trait Plotting { _: ScriptBase ⇒
-  //Plotting
+  //Plotting implementations
   case class Scatter3D(data: Seq[(D, D, D)], pointColor: Color = Color.RED) extends AbstractAnalysis {  //data: List[(X, Y, Z)]
     //Methods
     def init() {

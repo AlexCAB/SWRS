@@ -11,6 +11,7 @@ package utils
 trait ScriptBase extends App{
   //Short types
   type D = Double
+  type S = String
 
   //TODO Add more
 

@@ -14,11 +14,11 @@ import utils.ScriptBase
 object TransitionFunctionExample extends ScriptBase with Plotting{
   println("#### Transition function example ####")
   //Definitions
-  case class S(t: D, g: D, x: D, y: D)
+  case class S_(t: D, g: D, x: D, y: D)
   //Parameter
   val u = 5.0   //Init speed in m/s
-  val ts = 0.0 to 10.0 by .1
-  val gs = 0.1 to 2.0 by .1
+  val ts = (0 to 10 by 1).map(_ / 10.0)
+  val gs = (0 to 10 by 1).map(_ / 10.0)
   val Δt = 0.1
   //Parametric model
   def x(t: D) = t * u
@@ -30,16 +30,14 @@ object TransitionFunctionExample extends ScriptBase with Plotting{
   def υt(t: D) = t + Δt
   def υg(x: D) = x / (10.0 * 5.0)
   //Trace
-  var ss = Vector(S(t = .0, g = .1, x = .0, y = .0)) //Init state S'
+  var ss = Vector(S_(t = .0, g = .1, x = .0, y = .0)) //Init state S'
   while (ss.last.t <= 10.0) {
     val ps = ss.last
     val nt = υt(ps.t)   //Next t base on prev t
     val ng = υg(ps.x)   //Next g date on prev x
     val nx = x(nt)      //Next y eval by model
     val ny = y(nt, ng)  //Next x eval by model
-    ss :+= S(nt, ng, nx, ny)} //Put net state into list
+    ss :+= S_(nt, ng, nx, ny)} //Put net state into list
   //Plot x, y
   Plot2D(ss.map(s ⇒ (s.x, s.y)))
 }
-
-
