@@ -18,17 +18,15 @@ import utils.ScriptBase
  *   3A%20Logical%20processors%7C4155DDB2-718A-4C14-AFC1-5103ED2BCCA3%2F%29
  * Created 28.04.2018 author CAB */
 
-object NaiveReactiveImplementation extends ScriptBase with Plotting  with GraphVisualization{
+object NaiveReactiveImplementation extends ScriptBase with Plotting with GraphVisualization{
   println(
-    """ #### Function set interactive simulation ####
+    """ #### Naive reactive implementation of mixing problem ####
       | X = [t]
       | Y = [ω_1, ω_2̂]
       | G = [v_1, v_2, q_1, q_2, q_3, q_4, ω_3]
     """.stripMargin)
 
   // Data definition
-  case class X_(t: D)
-  case class Y_(ω_1: D, ω_2: D)
   trait SX_q_
   case class SX_1_(t: D, ω_1: D) extends SX_q_
   case class SX_2_(t: D, ω_2: D) extends SX_q_
@@ -219,7 +217,7 @@ object NaiveReactiveImplementation extends ScriptBase with Plotting  with GraphV
   viz_graph.show()
 
   // Run processing
-  val system = ActorSystem("QuickStart")
+  val system = ActorSystem("ExampleSys")
   val materializer = ActorMaterializer()(system)
   val mat = C.run()(materializer)
 }
