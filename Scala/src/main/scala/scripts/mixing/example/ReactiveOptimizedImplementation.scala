@@ -19,7 +19,7 @@ import scala.collection.immutable
  *   object-id={667A74AE-2CBE-04DF-1B0C-B3D3C90B410F}&10
  * Created 27.08.2018 author CAB */
 
-object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
+object ReactiveOptimizedImplementation extends ScriptBase with Plotting {
   println(
     """ #### Optimized reactive implementation of mixing problem ####
       | X = [t]
@@ -39,7 +39,7 @@ object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
     def toP_2_ = P_2_(v_2, q_2, q_3, q_4)}
 
   // Input definition
-  class SPrime_(S_prime: SX_q_) {
+  class SPrimeInput_(S_prime: SX_q_) {
     // Ship definition
     case class SPrimeShape(out1: Outlet[M], out2: Outlet[M], c: Outlet[M]) extends Shape {
       override val inlets: immutable.Seq[Inlet[_]] = List()
@@ -52,7 +52,7 @@ object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
       val bcast = b.add(Broadcast[M](3))
       // Wiring
       source ~> bcast
-      // expose port
+      // Expose port
       SPrimeShape(bcast.out(0), bcast.out(1), bcast.out(2))}}
 
   // Logical processor definition
@@ -78,10 +78,12 @@ object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
           m ⇒ m match {
             case M(i, ss1: SX_1_) if ssMap.contains(i) ⇒
               val m2 = ssMap(i)
+              ssMap -= i
               assert(m2.ss.isInstanceOf[SX_2_], "Second sub-state should have type SX_2_")
               List((M(i, ss1), m2))
             case M(i, ss2: SX_2_) if ssMap.contains(i) ⇒
               val m1 = ssMap(i)
+              ssMap -= i
               assert(m1.ss.isInstanceOf[SX_1_], "Second sub-state should have type SX_1_")
               List((m1,  M(i, ss2)))
             case nm ⇒
@@ -113,7 +115,6 @@ object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
 
   // Graph C builder
   def buildC[R](
-    n: Int,
     Δt: D,
     G: G_,
     X_transition: D⇒D⇒D,
@@ -132,8 +133,8 @@ object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
       val LPc_1 = b.add(Merge[M](4))
       LPc_1 ~> S_X_G
       // Build IN nodes
-      val in_1 = b.add(new SPrime_(S_prime_1).g)
-      val in_2 = b.add(new SPrime_(S_prime_2).g)
+      val in_1 = b.add(new SPrimeInput_(S_prime_1).g)
+      val in_2 = b.add(new SPrimeInput_(S_prime_2).g)
       // Build LP's
       val LPe_1 = b.add(new LPe_(f_t, f_ω_1, w=1).g)
       val LPe_2 = b.add(new LPe_(f_t, f_ω_2, w=2).g)
@@ -154,7 +155,6 @@ object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
       ClosedShape})}
 
   // Parameters
-  val n = 100
   val Δt = 0.1
   val S_prime_1 = SX_1_(t = 0.0, ω_1 = 0.0)
   val S_prime_2 = SX_2_(t = 0.0, ω_2 = 20.0)
@@ -186,10 +186,6 @@ object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
       -((5.0 * em(t) * q) / 21.0) + ((5.0 * ep(t) * q) / 21.0) + (5.0 * em(t)) + (5.0 * ep(t)) + 10.0
     (f_ω_1, f_ω_2)}
 
-  // Inputs
-  val source_S_prime_1 = Source.single(S_prime_1)
-  val source_S_prime_2 = Source.single(S_prime_2)
-
   // Visualization
   val chart = ChartRecorder2D(lines = Seq(("ω_1", Color.GREEN), ("ω_2", Color.RED), ("ω_3", Color.GRAY)), maxRange = 21)
 
@@ -211,9 +207,9 @@ object OptimizedReactiveImplementation  extends ScriptBase with Plotting {
 
   // Build graph
   val C = if(use_earlier_transition_function)
-    buildC(n, Δt, G, X_transition, S_earlier_transition, S_prime_1, S_prime_2, sink_S_X_G)
+    buildC(Δt, G, X_transition, S_earlier_transition, S_prime_1, S_prime_2, sink_S_X_G)
   else
-    buildC(n, Δt, G, X_transition, S_functional_transition, S_prime_1, S_prime_2, sink_S_X_G)
+    buildC(Δt, G, X_transition, S_functional_transition, S_prime_1, S_prime_2, sink_S_X_G)
 
   // Run processing
   val system = ActorSystem("ExampleSys")

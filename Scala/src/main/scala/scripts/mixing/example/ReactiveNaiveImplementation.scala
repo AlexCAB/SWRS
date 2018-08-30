@@ -18,7 +18,7 @@ import utils.ScriptBase
  *   3A%20Logical%20processors%7C4155DDB2-718A-4C14-AFC1-5103ED2BCCA3%2F%29
  * Created 28.04.2018 author CAB */
 
-object NaiveReactiveImplementation extends ScriptBase with Plotting with GraphVisualization{
+object ReactiveNaiveImplementation extends ScriptBase with Plotting with GraphVisualization{
   println(
     """ #### Naive reactive implementation of mixing problem ####
       | X = [t]
@@ -38,7 +38,7 @@ object NaiveReactiveImplementation extends ScriptBase with Plotting with GraphVi
     def toP_2_ = P_2_(v_2, q_2, q_3, q_4)}
 
   // Input definition
-  class SPrime_
+  class SPrimeInput_
     ( S_prime: SX_q_,
       w: Int,
       c: UniformFanInShape[M, _])
@@ -130,8 +130,8 @@ object NaiveReactiveImplementation extends ScriptBase with Plotting with GraphVi
       val LPc_1 = b.add(Merge[M](n * 2))
       LPc_1 ~> S_X_G
       // Build IN nodes
-      val in_1 = viz_graph.addNode(new SPrime_(S_prime_1, w=1, LPc_1))
-      val in_2 = viz_graph.addNode(new SPrime_(S_prime_2, w=2, LPc_1))
+      val in_1 = viz_graph.addNode(new SPrimeInput_(S_prime_1, w=1, LPc_1))
+      val in_2 = viz_graph.addNode(new SPrimeInput_(S_prime_2, w=2, LPc_1))
       // Init LP's
       var LPe_1 = viz_graph.addNode(new LPe_(in_1.r1, in_2.r1, f_t, f_ω_1, d=1, w=1, LPc_1))
       var LPe_2 = viz_graph.addNode(new LPe_(in_1.r2, in_2.r2, f_t, f_ω_2, d=1, w=2, LPc_1))
@@ -181,10 +181,6 @@ object NaiveReactiveImplementation extends ScriptBase with Plotting with GraphVi
     def f_ω_2(ω_1: D, ω_2: D, t_prev: D, t: D) =
       -((5.0 * em(t) * q) / 21.0) + ((5.0 * ep(t) * q) / 21.0) + (5.0 * em(t)) + (5.0 * ep(t)) + 10.0
       (f_ω_1, f_ω_2)}
-
-  // Inputs
-  val source_S_prime_1 = Source.single(S_prime_1)
-  val source_S_prime_2 = Source.single(S_prime_2)
 
   // Visualization
   val viz_graph = new VizGraph("C graph", width = 1200, height = 100)
